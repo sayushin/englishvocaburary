@@ -30,7 +30,7 @@ const Footer = () => {
             <Link
               key={href}
               href={href}
-              className={`text-sm font-medium transition-colors ${
+              className={`text-md py-3 font-medium transition-colors ${
                 active
                   ? "text-blue-600"
                   : "text-gray-500"
