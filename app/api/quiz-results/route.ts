@@ -8,7 +8,7 @@ type QuizResult = {
 async function incrementField(word: string, field: "memorized" | "notMemorized") {
   const { data: current, error: fetchError } = await supabase
     .from("EnglishVocaburary")
-    .select(field)
+    .select("memorized, notMemorized")
     .eq("word", word.trim().toLowerCase())
     .single();
 
@@ -16,7 +16,7 @@ async function incrementField(word: string, field: "memorized" | "notMemorized")
     throw fetchError;
   }
 
-  const currentValue = (current?.[field] as number | null) ?? 0;
+  const currentValue = current?.[field] ?? 0;
 
   const { error: updateError } = await supabase
     .from("EnglishVocaburary")
