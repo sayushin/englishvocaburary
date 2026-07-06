@@ -1,5 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
 
+export const dynamic = "force-dynamic";
+
 async function getStats() {
   const { count: inputted, error: totalError } = await supabase
     .from("EnglishVocaburary")

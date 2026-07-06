@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export type VocabularyItem = {
   word: string;
@@ -20,6 +20,10 @@ export default function VocabularyList({ words: initialWords }: VocabularyListPr
   const [form, setForm] = useState({ meaning_ja: "", sample_sentence: "" });
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setWords(initialWords);
+  }, [initialWords]);
 
   function startEdit(item: VocabularyItem) {
     setEditingWord(item.word);

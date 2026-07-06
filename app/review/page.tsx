@@ -1,6 +1,8 @@
 import VocabularyList from "@/components/VocabularyList";
 import { supabase } from "@/lib/supabaseClient";
 
+export const dynamic = "force-dynamic";
+
 type VocabularyItem = {
   word: string;
   meaning_ja: string;

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type Provider = "openai" | "deepseek";
@@ -17,6 +18,7 @@ type WordResult = {
 };
 
 export default function AddPage() {
+  const router = useRouter();
   const [word, setWord] = useState("");
   const [loading, setLoading] = useState<Provider | null>(null);
   const [saving, setSaving] = useState(false);
@@ -80,6 +82,7 @@ export default function AddPage() {
       setWord("");
       setResult(null);
       setSaved(false);
+      router.refresh();
     } catch {
       setError("Network error. Please try again.");
     } finally {
