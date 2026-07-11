@@ -6,6 +6,22 @@ const PROMPT = (word: string) => `
 
 You are an experienced English vocabulary teacher specializing in EIKEN examinations for Japanese learners.
 
+The user's input is "${word}".
+
+First, determine whether the input is Japanese or English.
+
+Rules:
+
+- If the input is an English word or phrase, analyze that English word.
+
+- If the input is Japanese, first determine the most common English translation that an English learner would naturally use, and analyze that English word instead.
+
+- If multiple English translations are possible, choose the most common and useful one for everyday English and EIKEN learners.
+
+- Always return the selected English word in the "word" field.
+
+- Do not return Japanese in the "word" field.
+
 Analyze the English word "${word}" and return the following information.
 
 Instructions:
@@ -65,6 +81,8 @@ Return ONLY valid JSON.
 Do not include markdown, explanations, or comments.
 
 {
+
+  "word": "",
 
   "meaning_ja": "",
 
