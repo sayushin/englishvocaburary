@@ -15,7 +15,7 @@ export async function PATCH(req: Request) {
         sample_sentence: sample_sentence ?? "",
       })
       .eq("word", word.trim().toLowerCase())
-      .select("word, meaning_ja, sample_sentence")
+      .select("word, meaning_ja, sample_sentence, memorized, notMemorized")
       .single();
 
     if (error) {

@@ -7,12 +7,14 @@ type VocabularyItem = {
   word: string;
   meaning_ja: string;
   sample_sentence: string;
+  memorized: number;
+  notMemorized: number;
 };
 
 export default async function ReviewPage() {
   const { data, error } = await supabase
     .from("EnglishVocaburary")
-    .select("word, meaning_ja, sample_sentence")
+    .select("word, meaning_ja, sample_sentence, memorized, notMemorized")
     .order("word", { ascending: true });
 
   const words = (data ?? []) as VocabularyItem[];

@@ -7,6 +7,8 @@ export type VocabularyItem = {
   word: string;
   meaning_ja: string;
   sample_sentence: string;
+  memorized: number;
+  notMemorized: number;
 };
 
 type VocabularyListProps = {
@@ -58,7 +60,9 @@ export default function VocabularyList({ words: initialWords }: VocabularyListPr
       }
 
       setWords((prev) =>
-        prev.map((item) => (item.word === word ? data : item))
+        prev.map((item) =>
+          item.word === word ? { ...item, ...data } : item
+        )
       );
       setEditingWord(null);
       router.refresh();
@@ -192,6 +196,15 @@ export default function VocabularyList({ words: initialWords }: VocabularyListPr
                     <p className="text-sm text-gray-700">{item.meaning_ja}</p>
                     <p className="mt-1 text-sm italic text-gray-600">
                       {item.sample_sentence}
+                    </p>
+                    <p className="mt-2 text-xs text-gray-500">
+                      <span className="text-emerald-600">
+                        Memorized: {item.memorized ?? 0}
+                      </span>
+                      {" · "}
+                      <span className="text-orange-500">
+                        Not memorized: {item.notMemorized ?? 0}
+                      </span>
                     </p>
                   </div>
 
