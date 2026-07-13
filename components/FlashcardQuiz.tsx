@@ -1,11 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import type { AskLanguage } from "@/lib/detectLanguage";
 
 type QuizWord = {
   word: string;
   meaning_ja: string;
+  meaning_en: string;
   sample_sentence: string;
+  askJAorEN: AskLanguage;
+  question: string;
+  answer: string;
+  questionLabel: string;
+  answerLabel: string;
 };
 
 type QuizPhase = "loading" | "quiz" | "saving" | "done" | "error";
@@ -155,6 +162,7 @@ export default function FlashcardQuiz() {
     <div>
       <p className="mb-4 text-sm text-gray-500">
         Card {currentIndex + 1} of {words.length}
+        {current.askJAorEN === "JA" ? " · JA → EN" : " · EN → JA"}
       </p>
 
       <button
@@ -165,20 +173,39 @@ export default function FlashcardQuiz() {
         {!flipped ? (
           <div className="text-center">
             <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-              English
+              {current.questionLabel}
             </p>
-            <p className="mt-2 text-3xl font-bold capitalize">{current.word}</p>
-            <p className="mt-4 text-xs text-gray-400">Tap to reveal answer</p>
+            <p
+              className={`mt-2 text-3xl font-bold ${
+                current.askJAorEN === "EN" ? "capitalize" : ""
+              }`}
+            >
+              {current.question}
+            </p>
+            <p className="mt-4 text-xs text-gray-400">
+              Tap to reveal {current.answerLabel.toLowerCase()} answer
+            </p>
           </div>
         ) : (
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-              Answer
+              {current.answerLabel}
             </p>
-            <p className="mt-2 text-lg text-gray-800">{current.meaning_ja}</p>
-            <p className="mt-3 text-sm italic text-gray-600">
-              {current.sample_sentence}
+            <p
+              className={`mt-2 text-lg text-gray-800 ${
+                current.askJAorEN === "JA" ? "capitalize" : ""
+              }`}
+            >
+              {current.answer}
             </p>
+            {current.askJAorEN === "EN" && current.sample_sentence && (
+              <p className="mt-3 text-sm italic text-gray-600">
+                {current.sample_sentence}
+              </p>
+            )}
+            {current.askJAorEN === "JA" && current.meaning_en && (
+              <p className="mt-3 text-sm text-gray-600">{current.meaning_en}</p>
+            )}
           </div>
         )}
       </button>
