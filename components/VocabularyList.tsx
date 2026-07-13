@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export type VocabularyItem = {
+  id: number;
   word: string;
   meaning_ja: string;
   sample_sentence: string;
@@ -15,10 +16,12 @@ type VocabularyListProps = {
   words: VocabularyItem[];
 };
 
-export default function VocabularyList({ words: initialWords }: VocabularyListProps) {
+export default function VocabularyList({
+  words: initialWords,
+}: VocabularyListProps) {
   const router = useRouter();
   const [words, setWords] = useState(initialWords);
-  const [editingWord, setEditingWord] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({ meaning_ja: "", sample_sentence: "" });
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +31,7 @@ export default function VocabularyList({ words: initialWords }: VocabularyListPr
   }, [initialWords]);
 
   function startEdit(item: VocabularyItem) {
-    setEditingWord(item.word);
+    setEditingId(item.id);
     setForm({
       meaning_ja: item.meaning_ja,
       sample_sentence: item.sample_sentence,
@@ -37,19 +40,19 @@ export default function VocabularyList({ words: initialWords }: VocabularyListPr
   }
 
   function cancelEdit() {
-    setEditingWord(null);
+    setEditingId(null);
     setError(null);
   }
 
-  async function handleUpdate(word: string) {
-    setLoading(`update-${word}`);
+  async function handleUpdate(id: number) {
+    setLoading(`update-${id}`);
     setError(null);
 
     try {
       const res = await fetch("/api/update-word", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ word, ...form }),
+        body: JSON.stringify({ id, ...form }),
       });
 
       const data = await res.json();
@@ -60,11 +63,9 @@ export default function VocabularyList({ words: initialWords }: VocabularyListPr
       }
 
       setWords((prev) =>
-        prev.map((item) =>
-          item.word === word ? { ...item, ...data } : item
-        )
+        prev.map((item) => (item.id === id ? { ...item, ...data } : item))
       );
-      setEditingWord(null);
+      setEditingId(null);
       router.refresh();
     } catch {
       setError("Network error. Please try again.");
@@ -73,17 +74,17 @@ export default function VocabularyList({ words: initialWords }: VocabularyListPr
     }
   }
 
-  async function handleDelete(word: string) {
+  async function handleDelete(id: number, word: string) {
     if (!confirm(`Delete "${word}"?`)) return;
 
-    setLoading(`delete-${word}`);
+    setLoading(`delete-${id}`);
     setError(null);
 
     try {
       const res = await fetch("/api/delete-word", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ word }),
+        body: JSON.stringify({ id }),
       });
 
       const data = await res.json();
@@ -93,8 +94,8 @@ export default function VocabularyList({ words: initialWords }: VocabularyListPr
         return;
       }
 
-      setWords((prev) => prev.filter((item) => item.word !== word));
-      if (editingWord === word) setEditingWord(null);
+      setWords((prev) => prev.filter((item) => item.id !== id));
+      if (editingId === id) setEditingId(null);
       router.refresh();
     } catch {
       setError("Network error. Please try again.");
@@ -121,11 +122,11 @@ export default function VocabularyList({ words: initialWords }: VocabularyListPr
 
       <ul className="space-y-3">
         {words.map((item) => {
-          const isEditing = editingWord === item.word;
+          const isEditing = editingId === item.id;
 
           return (
             <li
-              key={item.word}
+              key={item.id}
               className="flex gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4"
             >
               {isEditing ? (
@@ -170,11 +171,11 @@ export default function VocabularyList({ words: initialWords }: VocabularyListPr
                   <div className="flex shrink-0 flex-col gap-2">
                     <button
                       type="button"
-                      onClick={() => handleUpdate(item.word)}
+                      onClick={() => handleUpdate(item.id)}
                       disabled={loading !== null}
                       className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                     >
-                      {loading === `update-${item.word}` ? "Saving…" : "Save"}
+                      {loading === `update-${item.id}` ? "Saving…" : "Save"}
                     </button>
                     <button
                       type="button"
@@ -219,11 +220,11 @@ export default function VocabularyList({ words: initialWords }: VocabularyListPr
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleDelete(item.word)}
+                      onClick={() => handleDelete(item.id, item.word)}
                       disabled={loading !== null}
                       className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
                     >
-                      {loading === `delete-${item.word}` ? "Deleting…" : "Delete"}
+                      {loading === `delete-${item.id}` ? "Deleting…" : "Delete"}
                     </button>
                   </div>
                 </>

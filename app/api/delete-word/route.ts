@@ -2,16 +2,16 @@ import { supabase } from "@/lib/supabaseClient";
 
 export async function DELETE(req: Request) {
   try {
-    const { word } = await req.json();
+    const { id } = await req.json();
 
-    if (!word?.trim()) {
-      return Response.json({ error: "Word is required" }, { status: 400 });
+    if (id === undefined || id === null) {
+      return Response.json({ error: "ID is required" }, { status: 400 });
     }
 
     const { error } = await supabase
       .from("EnglishVocaburary")
       .delete()
-      .eq("word", word.trim().toLowerCase());
+      .eq("id", id);
 
     if (error) {
       console.error(error);

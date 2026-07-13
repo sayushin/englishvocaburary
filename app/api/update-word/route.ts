@@ -2,10 +2,10 @@ import { supabase } from "@/lib/supabaseClient";
 
 export async function PATCH(req: Request) {
   try {
-    const { word, meaning_ja, sample_sentence } = await req.json();
+    const { id, meaning_ja, sample_sentence } = await req.json();
 
-    if (!word?.trim()) {
-      return Response.json({ error: "Word is required" }, { status: 400 });
+    if (id === undefined || id === null) {
+      return Response.json({ error: "ID is required" }, { status: 400 });
     }
 
     const { data, error } = await supabase
@@ -14,8 +14,8 @@ export async function PATCH(req: Request) {
         meaning_ja: meaning_ja ?? "",
         sample_sentence: sample_sentence ?? "",
       })
-      .eq("word", word.trim().toLowerCase())
-      .select("word, meaning_ja, sample_sentence, memorized, notMemorized")
+      .eq("id", id)
+      .select("id, word, meaning_ja, sample_sentence, memorized, notMemorized")
       .single();
 
     if (error) {
