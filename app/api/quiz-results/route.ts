@@ -6,22 +6,29 @@ type QuizResult = {
 };
 
 async function incrementField(word: string, field: "memorized" | "notMemorized") {
-  const { data: current, error: fetchError } = await supabase
+  const normalized = word.trim().toLowerCase();
+
+  const { data: rows, error: fetchError } = await supabase
     .from("EnglishVocaburary")
     .select("memorized, notMemorized")
-    .eq("word", word.trim().toLowerCase())
-    .single();
+    .eq("word", normalized)
+    .limit(1);
 
   if (fetchError) {
     throw fetchError;
   }
 
-  const currentValue = current?.[field] ?? 0;
+  const current = rows?.[0];
+  if (!current) {
+    return;
+  }
+
+  const currentValue = (current[field] as number | null) ?? 0;
 
   const { error: updateError } = await supabase
     .from("EnglishVocaburary")
     .update({ [field]: currentValue + 1 })
-    .eq("word", word.trim().toLowerCase());
+    .eq("word", normalized);
 
   if (updateError) {
     throw updateError;

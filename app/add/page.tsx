@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { detectAskLanguage, type AskLanguage } from "@/lib/detectLanguage";
 
 type Provider = "openai" | "deepseek";
 
@@ -15,6 +16,7 @@ type WordResult = {
   pronunciation: string;
   part_of_speech: string;
   difficulty: string;
+  askJAorEN: AskLanguage;
 };
 
 export default function AddPage() {
@@ -51,7 +53,8 @@ export default function AddPage() {
         return;
       }
 
-      setResult(data);
+      const askJAorEN = detectAskLanguage(word.trim());
+      setResult({ ...data, askJAorEN });
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -94,11 +97,11 @@ export default function AddPage() {
     <main className="mx-auto max-w-lg px-4 pb-24 pt-8">
       <h1 className="mb-2 text-2xl font-bold">Add Vocabulary</h1>
       <p className="mb-6 text-sm text-gray-500">
-        Enter an English word and choose an AI to generate the details.
+        Enter an English or Japanese word and choose an AI to generate the details.
       </p>
 
       <label htmlFor="word" className="mb-1 block text-sm font-medium">
-        English word
+        Word (English or Japanese)
       </label>
       <input
         id="word"
@@ -108,7 +111,7 @@ export default function AddPage() {
         onKeyDown={(e) => {
           if (e.key === "Enter" && !loading) handleGenerate("openai");
         }}
-        placeholder="e.g. ephemeral"
+        placeholder="e.g. ephemeral or りんご"
         className="mb-4 w-full rounded-lg border border-gray-300 px-4 py-3 text-base outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
       />
 

@@ -1,13 +1,30 @@
+import { detectAskLanguage } from "@/lib/detectLanguage";
 import { supabase } from "@/lib/supabaseClient";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { word, meaning_ja, meaning_en, sample_sentence, sample_sentence_ja, pronunciation, part_of_speech, difficulty, provider } = body;
+    const {
+      word,
+      meaning_ja,
+      meaning_en,
+      sample_sentence,
+      sample_sentence_ja,
+      pronunciation,
+      part_of_speech,
+      difficulty,
+      provider,
+      askJAorEN,
+    } = body;
 
     if (!word?.trim()) {
       return Response.json({ error: "Word is required" }, { status: 400 });
     }
+
+    const language =
+      askJAorEN === "JA" || askJAorEN === "EN"
+        ? askJAorEN
+        : detectAskLanguage(word);
 
     const { data, error } = await supabase
       .from("EnglishVocaburary")
@@ -21,6 +38,7 @@ export async function POST(req: Request) {
         part_of_speech: part_of_speech ?? "",
         difficulty: difficulty ?? "",
         provider: provider ?? "",
+        askJAorEN: language,
       })
       .select()
       .single();
