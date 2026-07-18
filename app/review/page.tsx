@@ -1,31 +1,34 @@
-import VocabularyList from "@/components/VocabularyList";
+import ReviewTabs from "@/components/ReviewTabs";
+import type { VocabularyItem } from "@/components/VocabularyList";
 import { supabase } from "@/lib/supabaseClient";
+import type { SavedExpression } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-type VocabularyItem = {
-  id: number;
-  word: string;
-  meaning_ja: string;
-  sample_sentence: string;
-  memorized: number;
-  notMemorized: number;
-  askJAorEN: string | null;
-};
-
 export default async function ReviewPage() {
-  const { data, error } = await supabase
-    .from("EnglishVocaburary")
-    .select("id, word, meaning_ja, sample_sentence, memorized, notMemorized, askJAorEN")
-    .order("word", { ascending: true });
+  const [vocabularyResult, expressionResult] = await Promise.all([
+    supabase
+      .from("EnglishVocaburary")
+      .select(
+        "id, word, meaning_ja, sample_sentence, memorized, notMemorized, askJAorEN"
+      )
+      .order("word", { ascending: true }),
+    supabase
+      .from("expressions")
+      .select("*")
+      .order("createdAt", { ascending: false }),
+  ]);
 
-  const words = (data ?? []) as VocabularyItem[];
+  const words = (vocabularyResult.data ?? []) as VocabularyItem[];
+  const expressions = (expressionResult.data ?? []) as SavedExpression[];
+  const error = vocabularyResult.error ?? expressionResult.error;
 
   return (
     <main className="mx-auto max-w-lg px-4 pb-24 pt-8">
       <h1 className="mb-2 text-2xl font-bold">Review</h1>
       <p className="mb-6 text-sm text-gray-500">
-        {words.length} word{words.length !== 1 ? "s" : ""} saved
+        {words.length} word{words.length !== 1 ? "s" : ""} and{" "}
+        {expressions.length} expression{expressions.length !== 1 ? "s" : ""} saved
       </p>
 
       {error && (
@@ -34,7 +37,7 @@ export default async function ReviewPage() {
         </div>
       )}
 
-      {!error && <VocabularyList words={words} />}
+      {!error && <ReviewTabs words={words} expressions={expressions} />}
     </main>
   );
 }

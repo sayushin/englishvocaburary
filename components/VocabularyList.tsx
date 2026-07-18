@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { resolveAskLanguage, type AskLanguage } from "@/lib/detectLanguage";
 
 export type VocabularyItem = {
@@ -27,10 +27,7 @@ export default function VocabularyList({
   const [form, setForm] = useState({ meaning_ja: "", sample_sentence: "" });
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setWords(initialWords);
-  }, [initialWords]);
+  const [revealedIds, setRevealedIds] = useState<Set<number>>(new Set());
 
   function startEdit(item: VocabularyItem) {
     setEditingId(item.id);
@@ -174,6 +171,7 @@ export default function VocabularyList({
         {words.map((item) => {
           const isEditing = editingId === item.id;
           const askLang = resolveAskLanguage(item.askJAorEN, item.word);
+          const isRevealed = revealedIds.has(item.id);
 
           return (
             <li
@@ -245,10 +243,28 @@ export default function VocabularyList({
                   </h2>
 
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-700">{item.meaning_ja}</p>
+                    {isRevealed ? (
+                      <p className="text-sm text-gray-700">{item.meaning_ja}</p>
+                    ) : (
+                      <p className="text-sm text-gray-400">Japanese is hidden</p>
+                    )}
                     <p className="mt-1 text-sm italic text-gray-600">
                       {item.sample_sentence}
                     </p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setRevealedIds((current) => {
+                          const next = new Set(current);
+                          if (next.has(item.id)) next.delete(item.id);
+                          else next.add(item.id);
+                          return next;
+                        })
+                      }
+                      className="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-700"
+                    >
+                      {isRevealed ? "Hide Japanese" : "Reveal Japanese"}
+                    </button>
                     <p className="mt-2 text-xs text-gray-500">
                       <span className="text-emerald-600">
                         Memorized: {item.memorized ?? 0}
