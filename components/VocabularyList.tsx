@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { resolveAskLanguage, type AskLanguage } from "@/lib/detectLanguage";
 
 export type VocabularyItem = {
   id: number;
@@ -10,6 +11,7 @@ export type VocabularyItem = {
   sample_sentence: string;
   memorized: number;
   notMemorized: number;
+  askJAorEN: string | null;
 };
 
 type VocabularyListProps = {
@@ -74,6 +76,54 @@ export default function VocabularyList({
     }
   }
 
+  async function handleToggleAskLanguage(item: VocabularyItem) {
+    const current = resolveAskLanguage(item.askJAorEN, item.word);
+    const next: AskLanguage = current === "JA" ? "EN" : "JA";
+
+    setLoading(`ask-${item.id}`);
+    setError(null);
+
+    // Optimistic UI update
+    setWords((prev) =>
+      prev.map((w) => (w.id === item.id ? { ...w, askJAorEN: next } : w))
+    );
+
+    try {
+      const res = await fetch("/api/update-word", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: item.id, askJAorEN: next }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // Revert on failure
+        setWords((prev) =>
+          prev.map((w) =>
+            w.id === item.id ? { ...w, askJAorEN: item.askJAorEN } : w
+          )
+        );
+        setError(data.error ?? "Failed to update quiz language");
+        return;
+      }
+
+      setWords((prev) =>
+        prev.map((w) => (w.id === item.id ? { ...w, ...data } : w))
+      );
+      router.refresh();
+    } catch {
+      setWords((prev) =>
+        prev.map((w) =>
+          w.id === item.id ? { ...w, askJAorEN: item.askJAorEN } : w
+        )
+      );
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
   async function handleDelete(id: number, word: string) {
     if (!confirm(`Delete "${word}"?`)) return;
 
@@ -123,6 +173,7 @@ export default function VocabularyList({
       <ul className="space-y-3">
         {words.map((item) => {
           const isEditing = editingId === item.id;
+          const askLang = resolveAskLanguage(item.askJAorEN, item.word);
 
           return (
             <li
@@ -207,6 +258,49 @@ export default function VocabularyList({
                         Not memorized: {item.notMemorized ?? 0}
                       </span>
                     </p>
+
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-500">
+                        Quiz:
+                      </span>
+                      <div className="inline-flex rounded-lg border border-gray-300 bg-white p-0.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (askLang !== "EN") handleToggleAskLanguage(item);
+                          }}
+                          disabled={loading !== null}
+                          className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-colors disabled:opacity-50 ${
+                            askLang === "EN"
+                              ? "bg-blue-600 text-white"
+                              : "text-gray-500 hover:text-gray-700"
+                          }`}
+                        >
+                          EN
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (askLang !== "JA") handleToggleAskLanguage(item);
+                          }}
+                          disabled={loading !== null}
+                          className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-colors disabled:opacity-50 ${
+                            askLang === "JA"
+                              ? "bg-blue-600 text-white"
+                              : "text-gray-500 hover:text-gray-700"
+                          }`}
+                        >
+                          JA
+                        </button>
+                      </div>
+                      <span className="text-xs text-gray-400">
+                        {loading === `ask-${item.id}`
+                          ? "Saving…"
+                          : askLang === "JA"
+                            ? "Ask JA → answer EN"
+                            : "Ask EN → answer JA"}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="flex shrink-0 flex-col gap-2">

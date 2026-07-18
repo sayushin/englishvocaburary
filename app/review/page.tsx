@@ -10,12 +10,13 @@ type VocabularyItem = {
   sample_sentence: string;
   memorized: number;
   notMemorized: number;
+  askJAorEN: string | null;
 };
 
 export default async function ReviewPage() {
   const { data, error } = await supabase
     .from("EnglishVocaburary")
-    .select("id, word, meaning_ja, sample_sentence, memorized, notMemorized")
+    .select("id, word, meaning_ja, sample_sentence, memorized, notMemorized, askJAorEN")
     .order("word", { ascending: true });
 
   const words = (data ?? []) as VocabularyItem[];
