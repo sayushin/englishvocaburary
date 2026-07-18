@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { detectAskLanguage, type AskLanguage } from "@/lib/detectLanguage";
+import ExpressionGenerator from "@/components/ExpressionGenerator";
 
 type Provider = "openai" | "deepseek";
 
@@ -198,6 +199,8 @@ export default function AddPage() {
           </button>
         </section>
       )}
+
+      <ExpressionGenerator />
     </main>
   );
 }

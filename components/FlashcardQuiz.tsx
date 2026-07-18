@@ -54,7 +54,10 @@ export default function FlashcardQuiz() {
   }, []);
 
   useEffect(() => {
-    loadQuiz();
+    const timeout = window.setTimeout(() => {
+      void loadQuiz();
+    }, 0);
+    return () => window.clearTimeout(timeout);
   }, [loadQuiz]);
 
   async function saveResults(
