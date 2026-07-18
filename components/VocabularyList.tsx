@@ -297,8 +297,8 @@ export default function VocabularyList({
                         {loading === `ask-${item.id}`
                           ? "Saving…"
                           : askLang === "JA"
-                            ? "Ask JA → answer EN"
-                            : "Ask EN → answer JA"}
+                            ? "JA → EN"
+                            : "EN → JA"}
                       </span>
                     </div>
                   </div>
