@@ -10,7 +10,7 @@ export default async function ReviewPage() {
     supabase
       .from("EnglishVocaburary")
       .select(
-        "id, word, meaning_ja, sample_sentence, memorized, notMemorized, askJAorEN"
+        "id, word, meaning_ja, sample_sentence, synonyms, memorized, notMemorized, askJAorEN"
       )
       .order("word", { ascending: true }),
     supabase

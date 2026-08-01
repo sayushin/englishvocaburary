@@ -14,6 +14,7 @@ export async function POST(req: Request) {
       part_of_speech,
       difficulty,
       provider,
+      synonyms,
       askJAorEN,
     } = body;
 
@@ -38,6 +39,9 @@ export async function POST(req: Request) {
         part_of_speech: part_of_speech ?? "",
         difficulty: difficulty ?? "",
         provider: provider ?? "",
+        synonyms: Array.isArray(synonyms)
+          ? synonyms.join(", ")
+          : (synonyms ?? ""),
         askJAorEN: language,
       })
       .select()
