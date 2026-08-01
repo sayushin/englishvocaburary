@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { resolveAskLanguage, type AskLanguage } from "@/lib/detectLanguage";
+import type { Provider } from "@/lib/types";
 
 export type VocabularyItem = {
   id: number;
@@ -33,6 +34,7 @@ export default function VocabularyList({
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [revealedIds, setRevealedIds] = useState<Set<number>>(new Set());
+  const [provider, setProvider] = useState<Provider>("openai");
 
   function startEdit(item: VocabularyItem) {
     setEditingId(item.id);
@@ -72,6 +74,77 @@ export default function VocabularyList({
       );
       setEditingId(null);
       router.refresh();
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function fetchSynonyms(item: VocabularyItem) {
+    const res = await fetch("/api/generate-synonyms", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        word: item.word,
+        meaning_ja: item.meaning_ja,
+        provider,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.error ?? "Failed to generate synonyms");
+      return null;
+    }
+
+    return data.synonyms as string;
+  }
+
+  /** Generate synonyms with AI and save them straight away. */
+  async function handleGenerateSynonyms(item: VocabularyItem) {
+    setLoading(`synonyms-${item.id}`);
+    setError(null);
+
+    try {
+      const synonyms = await fetchSynonyms(item);
+      if (synonyms === null) return;
+
+      const res = await fetch("/api/update-word", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: item.id, synonyms }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error ?? "Failed to save synonyms");
+        return;
+      }
+
+      setWords((prev) =>
+        prev.map((w) => (w.id === item.id ? { ...w, ...data } : w))
+      );
+      router.refresh();
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  /** Fill the edit field with AI suggestions so they can be tweaked first. */
+  async function handleSuggestSynonyms(item: VocabularyItem) {
+    setLoading(`synonyms-${item.id}`);
+    setError(null);
+
+    try {
+      const synonyms = await fetchSynonyms(item);
+      if (synonyms !== null) {
+        setForm((f) => ({ ...f, synonyms }));
+      }
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -167,6 +240,29 @@ export default function VocabularyList({
 
   return (
     <>
+      <div className="mb-4 flex items-center gap-2">
+        <span className="text-xs font-medium text-gray-500">
+          Generate synonyms with:
+        </span>
+        <div className="inline-flex rounded-lg border border-gray-300 bg-white p-0.5">
+          {(["openai", "deepseek"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setProvider(option)}
+              disabled={loading !== null}
+              className={`rounded-md px-2.5 py-1 text-xs font-semibold transition-colors disabled:opacity-50 ${
+                provider === option
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {option === "openai" ? "ChatGPT" : "DeepSeek"}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {error && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
@@ -238,6 +334,16 @@ export default function VocabularyList({
                         }
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
                       />
+                      <button
+                        type="button"
+                        onClick={() => handleSuggestSynonyms(item)}
+                        disabled={loading !== null}
+                        className="mt-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                      >
+                        {loading === `synonyms-${item.id}`
+                          ? "Generating…"
+                          : "Suggest with AI"}
+                      </button>
                     </div>
                   </div>
 
@@ -275,18 +381,28 @@ export default function VocabularyList({
                     <p className="mt-1 text-sm italic text-gray-600">
                       {item.sample_sentence}
                     </p>
-                    {synonyms.length > 0 && (
-                      <p className="mt-2 flex flex-wrap gap-1.5">
-                        {synonyms.map((synonym) => (
-                          <span
-                            key={synonym}
-                            className="rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-700"
-                          >
-                            {synonym}
-                          </span>
-                        ))}
-                      </p>
-                    )}
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      {synonyms.map((synonym) => (
+                        <span
+                          key={synonym}
+                          className="rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-700"
+                        >
+                          {synonym}
+                        </span>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => handleGenerateSynonyms(item)}
+                        disabled={loading !== null}
+                        className="rounded-full border border-dashed border-blue-300 px-2.5 py-0.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+                      >
+                        {loading === `synonyms-${item.id}`
+                          ? "Generating…"
+                          : synonyms.length > 0
+                            ? "↻ Regenerate"
+                            : "+ Add synonyms"}
+                      </button>
+                    </div>
                     <button
                       type="button"
                       onClick={() =>

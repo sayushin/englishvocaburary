@@ -1,5 +1,6 @@
 import { detectAskLanguage } from "@/lib/detectLanguage";
 import { supabase } from "@/lib/supabaseClient";
+import { normalizeSynonyms } from "@/lib/synonyms";
 
 export async function POST(req: Request) {
   try {
@@ -39,9 +40,7 @@ export async function POST(req: Request) {
         part_of_speech: part_of_speech ?? "",
         difficulty: difficulty ?? "",
         provider: provider ?? "",
-        synonyms: Array.isArray(synonyms)
-          ? synonyms.join(", ")
-          : (synonyms ?? ""),
+        synonyms: normalizeSynonyms(synonyms),
         askJAorEN: language,
       })
       .select()

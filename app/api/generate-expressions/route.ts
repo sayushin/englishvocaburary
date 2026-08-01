@@ -1,30 +1,17 @@
-import OpenAI from "openai";
-import type {
-  ExpressionKind,
-  ExpressionSuggestion,
-  Provider,
-} from "@/lib/types";
+import {
+  getApiKey,
+  getClient,
+  getModel,
+  getProviderName,
+  isProvider,
+} from "@/lib/aiClient";
+import type { ExpressionKind, ExpressionSuggestion } from "@/lib/types";
 
 const ALLOWED_KINDS: ExpressionKind[] = [
   "short_expression",
   "sentence",
   "paragraph",
 ];
-
-function getClient(provider: Provider) {
-  if (provider === "deepseek") {
-    return new OpenAI({
-      apiKey: process.env.DEEPSEEK_API_KEY,
-      baseURL: "https://api.deepseek.com",
-    });
-  }
-
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-}
-
-function getModel(provider: Provider) {
-  return provider === "deepseek" ? "deepseek-chat" : "gpt-4o-mini";
-}
 
 function makePrompt(input: string) {
   return `
@@ -79,19 +66,13 @@ export async function POST(req: Request) {
       return Response.json({ error: "Input is required" }, { status: 400 });
     }
 
-    if (provider !== "openai" && provider !== "deepseek") {
+    if (!isProvider(provider)) {
       return Response.json({ error: "Invalid provider" }, { status: 400 });
     }
 
-    const apiKey =
-      provider === "deepseek"
-        ? process.env.DEEPSEEK_API_KEY
-        : process.env.OPENAI_API_KEY;
-
-    if (!apiKey) {
-      const name = provider === "deepseek" ? "DeepSeek" : "OpenAI";
+    if (!getApiKey(provider)) {
       return Response.json(
-        { error: `${name} API key is not configured` },
+        { error: `${getProviderName(provider)} API key is not configured` },
         { status: 500 }
       );
     }
