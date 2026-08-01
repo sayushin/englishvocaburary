@@ -1,6 +1,11 @@
-import OpenAI from "openai";
-
-type Provider = "openai" | "deepseek";
+import {
+  getApiKey,
+  getClient,
+  getModel,
+  getProviderName,
+  isProvider,
+} from "@/lib/aiClient";
+import { normalizeSynonyms } from "@/lib/synonyms";
 
 const PROMPT = (word: string) => `
 
@@ -106,37 +111,6 @@ Do not include markdown, explanations, or comments.
 
 `;
 
-function getClient(provider: Provider) {
-  if (provider === "deepseek") {
-    return new OpenAI({
-      apiKey: process.env.DEEPSEEK_API_KEY,
-      baseURL: "https://api.deepseek.com",
-    });
-  }
-
-  return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
-}
-
-function getModel(provider: Provider) {
-  return provider === "deepseek" ? "deepseek-chat" : "gpt-4o-mini";
-}
-
-/** Models may return synonyms as an array or an already joined string. */
-function normalizeSynonyms(value: unknown): string {
-  const list = Array.isArray(value)
-    ? value
-    : typeof value === "string"
-      ? value.split(",")
-      : [];
-
-  return list
-    .map((item) => String(item).trim())
-    .filter(Boolean)
-    .join(", ");
-}
-
 export async function POST(req: Request) {
   try {
     const { word, provider = "openai" } = await req.json();
@@ -145,24 +119,18 @@ export async function POST(req: Request) {
       return Response.json({ error: "Word is required" }, { status: 400 });
     }
 
-    if (provider !== "openai" && provider !== "deepseek") {
+    if (!isProvider(provider)) {
       return Response.json({ error: "Invalid provider" }, { status: 400 });
     }
 
-    const apiKey =
-      provider === "deepseek"
-        ? process.env.DEEPSEEK_API_KEY
-        : process.env.OPENAI_API_KEY;
-
-    if (!apiKey) {
+    if (!getApiKey(provider)) {
       return Response.json(
-        { error: `${provider === "deepseek" ? "DeepSeek" : "OpenAI"} API key is not configured` },
+        { error: `${getProviderName(provider)} API key is not configured` },
         { status: 500 }
       );
     }
 
-    const client = getClient(provider);
-    const completion = await client.chat.completions.create({
+    const completion = await getClient(provider).chat.completions.create({
       model: getModel(provider),
       messages: [{ role: "user", content: PROMPT(word.trim()) }],
       response_format: { type: "json_object" },

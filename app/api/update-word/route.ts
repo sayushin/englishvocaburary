@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
+import { normalizeSynonyms } from "@/lib/synonyms";
 
 export async function PATCH(req: Request) {
   try {
@@ -18,9 +19,7 @@ export async function PATCH(req: Request) {
       updates.sample_sentence = sample_sentence ?? "";
     }
     if (synonyms !== undefined) {
-      updates.synonyms = Array.isArray(synonyms)
-        ? synonyms.join(", ")
-        : (synonyms ?? "");
+      updates.synonyms = normalizeSynonyms(synonyms);
     }
     if (askJAorEN !== undefined) {
       if (askJAorEN !== "JA" && askJAorEN !== "EN") {
