@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const { id, meaning_ja, sample_sentence, askJAorEN } = body;
+    const { id, meaning_ja, sample_sentence, synonyms, askJAorEN } = body;
 
     if (id === undefined || id === null) {
       return Response.json({ error: "ID is required" }, { status: 400 });
@@ -16,6 +16,11 @@ export async function PATCH(req: Request) {
     }
     if (sample_sentence !== undefined) {
       updates.sample_sentence = sample_sentence ?? "";
+    }
+    if (synonyms !== undefined) {
+      updates.synonyms = Array.isArray(synonyms)
+        ? synonyms.join(", ")
+        : (synonyms ?? "");
     }
     if (askJAorEN !== undefined) {
       if (askJAorEN !== "JA" && askJAorEN !== "EN") {
@@ -36,7 +41,7 @@ export async function PATCH(req: Request) {
       .update(updates)
       .eq("id", id)
       .select(
-        "id, word, meaning_ja, sample_sentence, memorized, notMemorized, askJAorEN"
+        "id, word, meaning_ja, sample_sentence, synonyms, memorized, notMemorized, askJAorEN"
       )
       .single();
 

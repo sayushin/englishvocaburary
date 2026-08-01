@@ -17,6 +17,7 @@ type WordResult = {
   pronunciation: string;
   part_of_speech: string;
   difficulty: string;
+  synonyms: string;
   askJAorEN: AskLanguage;
 };
 
@@ -164,6 +165,26 @@ export default function AddPage() {
             <div>
               <dt className="font-medium text-gray-500">Difficulty</dt>
               <dd className="mt-0.5 capitalize">{result.difficulty}</dd>
+            </div>
+
+            <div>
+              <dt className="font-medium text-gray-500">Synonyms</dt>
+              <dd className="mt-0.5">
+                {result.synonyms ? (
+                  <span className="flex flex-wrap gap-1.5">
+                    {result.synonyms.split(",").map((synonym) => (
+                      <span
+                        key={synonym}
+                        className="rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-700"
+                      >
+                        {synonym.trim()}
+                      </span>
+                    ))}
+                  </span>
+                ) : (
+                  <span className="text-gray-400">None</span>
+                )}
+              </dd>
             </div>
 
             <div>

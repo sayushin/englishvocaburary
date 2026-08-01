@@ -9,6 +9,7 @@ export type VocabularyItem = {
   word: string;
   meaning_ja: string;
   sample_sentence: string;
+  synonyms: string | null;
   memorized: number;
   notMemorized: number;
   askJAorEN: string | null;
@@ -24,7 +25,11 @@ export default function VocabularyList({
   const router = useRouter();
   const [words, setWords] = useState(initialWords);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState({ meaning_ja: "", sample_sentence: "" });
+  const [form, setForm] = useState({
+    meaning_ja: "",
+    sample_sentence: "",
+    synonyms: "",
+  });
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [revealedIds, setRevealedIds] = useState<Set<number>>(new Set());
@@ -34,6 +39,7 @@ export default function VocabularyList({
     setForm({
       meaning_ja: item.meaning_ja,
       sample_sentence: item.sample_sentence,
+      synonyms: item.synonyms ?? "",
     });
     setError(null);
   }
@@ -172,6 +178,10 @@ export default function VocabularyList({
           const isEditing = editingId === item.id;
           const askLang = resolveAskLanguage(item.askJAorEN, item.word);
           const isRevealed = revealedIds.has(item.id);
+          const synonyms = (item.synonyms ?? "")
+            .split(",")
+            .map((synonym) => synonym.trim())
+            .filter(Boolean);
 
           return (
             <li
@@ -215,6 +225,20 @@ export default function VocabularyList({
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
                       />
                     </div>
+
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-500">
+                        Synonyms (comma separated)
+                      </label>
+                      <input
+                        type="text"
+                        value={form.synonyms}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, synonyms: e.target.value }))
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                      />
+                    </div>
                   </div>
 
                   <div className="flex shrink-0 flex-col gap-2">
@@ -251,6 +275,18 @@ export default function VocabularyList({
                     <p className="mt-1 text-sm italic text-gray-600">
                       {item.sample_sentence}
                     </p>
+                    {synonyms.length > 0 && (
+                      <p className="mt-2 flex flex-wrap gap-1.5">
+                        {synonyms.map((synonym) => (
+                          <span
+                            key={synonym}
+                            className="rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-700"
+                          >
+                            {synonym}
+                          </span>
+                        ))}
+                      </p>
+                    )}
                     <button
                       type="button"
                       onClick={() =>

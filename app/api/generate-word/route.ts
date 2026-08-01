@@ -40,6 +40,8 @@ Instructions:
 
   noun, verb, adjective, adverb, pronoun, preposition, conjunction, interjection.
 
+- The synonyms must be 3 to 5 common English words or short phrases with a similar meaning and the same part of speech. Order them from most to least common. If the word has no natural synonym, return an empty array.
+
 Determine the EIKEN level using the following criteria:
 
 - EIKEN Grade 5: very basic junior high school words
@@ -96,7 +98,9 @@ Do not include markdown, explanations, or comments.
 
   "part_of_speech": "",
 
-  "difficulty": ""
+  "difficulty": "",
+
+  "synonyms": []
 
 }
 
@@ -117,6 +121,20 @@ function getClient(provider: Provider) {
 
 function getModel(provider: Provider) {
   return provider === "deepseek" ? "deepseek-chat" : "gpt-4o-mini";
+}
+
+/** Models may return synonyms as an array or an already joined string. */
+function normalizeSynonyms(value: unknown): string {
+  const list = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? value.split(",")
+      : [];
+
+  return list
+    .map((item) => String(item).trim())
+    .filter(Boolean)
+    .join(", ");
 }
 
 export async function POST(req: Request) {
@@ -157,7 +175,12 @@ export async function POST(req: Request) {
 
     const result = JSON.parse(content);
 
-    return Response.json({ word: word.trim(), provider, ...result });
+    return Response.json({
+      word: word.trim(),
+      ...result,
+      provider,
+      synonyms: normalizeSynonyms(result.synonyms),
+    });
   } catch (error) {
     console.error(error);
 
